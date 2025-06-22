@@ -21,7 +21,7 @@ if st.button("立即分析"):
                 if response.status_code == 200:
                     result = response.json()
                     st.success("分析完成！")
-                    st.markdown(f"**語句原文：** {result['input']}")
+                    st.markdown(f"**語句原文：** {user_input}")
                     st.markdown(f"**風險等級：** {result['risk_level']}")
                     st.markdown(f"**建議改寫：** {result['rewritten']}")
                 else:
