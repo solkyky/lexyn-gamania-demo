@@ -1,30 +1,34 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+import openai
+import os
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+openai.api_key = os.getenv("OPENAI_API_KEY")  # 或者你可以直接寫入金鑰
 
 app = FastAPI()
 
-# CORS 設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 開發用，正式請改成前端實際網域
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+class AnalyzeRequest(BaseModel):
+    text: str
 
-# 測試首頁路由
-@app.get("/")
-async def read_root():
-    return {"message": "Lexyn API is running"}
-
-# ✅ 新增分析路由
 @app.post("/analyze")
-async def analyze(request: Request):
-    data = await request.json()
-    # 模擬分析邏輯，可之後替換成真正模型推論
-    text = data.get("text", "")
-    return {
-        "input": text,
-        "status": "ok",
-        "message": f"已收到內容，共 {len(text)} 字元"
-    }
+async def analyze_text(data: AnalyzeRequest):
+    prompt = f"""
+你是一位語境分析助手，請針對以下句子做語意風險判定與分析：
+
+句子：「{data.text}」
+
+請用 JSON 格式回答：
+{{
+  "情緒": "",
+  "是否為負面語意": true/false,
+  "潛在風險等級": "低/中/高",
+  "簡短說明": ""
+}}
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+    )
+    result = response['choices'][0]['message']['content']
+    return {"input": data.text, "analysis": result}
