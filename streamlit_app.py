@@ -15,7 +15,7 @@ if st.button("立即分析"):
         with st.spinner("正在分析中..."):
             try:
                 # 連線到 FastAPI 後端 API
-                api_url = "https://lexyn-gamania-demo.onrender.com/analyze"
+                api_url = "https://lexyn-gamania-demo-1.onrender.com/analyze"
                 response = requests.post(api_url, json={"text": user_input})
                 
                 if response.status_code == 200:
