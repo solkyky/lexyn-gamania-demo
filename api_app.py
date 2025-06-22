@@ -22,4 +22,4 @@ async def analyze_text(req: TextRequest):
     return {
         "risk_level": "Low",
         "rewritten": f"{req.text}（這是重寫建議）"
-    }
+    }#
