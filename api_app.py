@@ -1,41 +1,45 @@
-import openai
+# api_app.py
 import os
-from fastapi import FastAPI
-from pydantic import BaseModel
+import openai
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
-openai.api_key = os.getenv("OPENAI_API_KEY")  # 或者你可以直接寫入金鑰
+# 載入 API KEY
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# 建立 FastAPI 實例
 app = FastAPI()
 
-class AnalyzeRequest(BaseModel):
-    text: str
+# 允許所有跨域請求（方便測試）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.post("/analyze")
-async def analyze_text(data: AnalyzeRequest):
-    prompt = f"""
-你是一位語境分析助手，請針對以下句子做語意風險判定與分析：
-
-句子：「{data.text}」
-
-請用 JSON 格式回答：
-{{
-  "情緒": "",
-  "是否為負面語意": true/false,
-  "潛在風險等級": "低/中/高",
-  "簡短說明": ""
-}}
-    """
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
-    result = response['choices'][0]['message']['content']
-    return {"input": data.text, "analysis": result}
-from fastapi import FastAPI
-
-app = FastAPI()
-
+# 顯示首頁狀態
 @app.get("/")
 async def root():
     return {"message": "Lexyn API is running"}
+
+# 核心功能：語意分析
+@app.post("/analyze")
+async def analyze(request: Request):
+    data = await request.json()
+    text = data.get("text")
+
+    if not text:
+        return {"error": "Missing input text."}
+
+    # GPT-4o 語意分析
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "請判斷這段文字是否具有操控性、勒索性、情緒暗示、或語境不當的特徵，並簡要解釋原因。"},
+            {"role": "user", "content": text}
+        ]
+    )
+    reply = response["choices"][0]["message"]["content"]
+    return {"analysis": reply}
