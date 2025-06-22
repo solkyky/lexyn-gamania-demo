@@ -32,3 +32,10 @@ async def analyze_text(data: AnalyzeRequest):
     )
     result = response['choices'][0]['message']['content']
     return {"input": data.text, "analysis": result}
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    return {"message": "Lexyn API is running"}
