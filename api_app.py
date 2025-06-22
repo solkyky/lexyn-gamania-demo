@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -12,9 +12,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ 新增根目錄首頁測試路由
+# 測試首頁路由
 @app.get("/")
 async def read_root():
     return {"message": "Lexyn API is running"}
 
-# 假設你已經有 /analyze 等路由，保留即可
+# ✅ 新增分析路由
+@app.post("/analyze")
+async def analyze(request: Request):
+    data = await request.json()
+    # 模擬分析邏輯，可之後替換成真正模型推論
+    text = data.get("text", "")
+    return {
+        "input": text,
+        "status": "ok",
+        "message": f"已收到內容，共 {len(text)} 字元"
+    }
