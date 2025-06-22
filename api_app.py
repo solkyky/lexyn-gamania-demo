@@ -4,13 +4,13 @@ import openai
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-# 載入 API KEY
+# 讀入 API KEY（環境變數 OPENAI_API_KEY）
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # 建立 FastAPI 實例
 app = FastAPI()
 
-# 允許所有跨域請求（方便測試）
+# 設定 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,12 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 顯示首頁狀態
+# 根路徑測試
 @app.get("/")
 async def root():
     return {"message": "Lexyn API is running"}
 
-# 核心功能：語意分析
+# 語意分析路由
 @app.post("/analyze")
 async def analyze(request: Request):
     data = await request.json()
@@ -33,13 +33,20 @@ async def analyze(request: Request):
     if not text:
         return {"error": "Missing input text."}
 
-    # GPT-4o 語意分析
-    response = openai.ChatCompletion.create(
+    # GPT-4o 非同步語意分析
+    response = await openai.ChatCompletion.acreate(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "請判斷這段文字是否具有操控性、勒索性、情緒暗示、或語境不當的特徵，並簡要解釋原因。"},
-            {"role": "user", "content": text}
+            {
+                "role": "system",
+                "content": "請判斷輸入文字是否具備潛在性、勒索性、情緒暗示、誤導原則、不當的脈絡，並簡要解釋原因。"
+            },
+            {
+                "role": "user",
+                "content": text
+            }
         ]
     )
+
     reply = response["choices"][0]["message"]["content"]
     return {"analysis": reply}
